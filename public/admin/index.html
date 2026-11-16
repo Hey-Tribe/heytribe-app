@@ -175,7 +175,7 @@ const ICON = {
 const ico = (n, s=18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]||""}</svg>`;
 const mark = w => `<svg width="${w}" height="${Math.round(w*112/120)}" viewBox="0 0 120 112" aria-hidden="true"><path d="M30 0H90A30 30 0 0 1 120 30V58A30 30 0 0 1 90 88H46L22 110V88A22 24 0 0 1 0 64V30A30 30 0 0 1 30 0Z" fill="#5E8C7A"/><circle cx="35" cy="44" r="11" fill="#fff"/><circle cx="63" cy="44" r="11" fill="#fff"/><circle cx="88" cy="49" r="7" fill="#fff"/></svg>`;
 const ST = { stats:null, view: (location.hash.slice(1) || "overview"), me:null };
-const VIEWS = [["overview","Overview","home"],["traffic","Traffic","chart"],["families","Families","users"],["people","People","user"],["billing","Billing","card"],["roadmap","Roadmap","map"],["support","Support","inbox"],["errors","Errors","alert"],["settings","Settings","gear"]];
+const VIEWS = [["overview","Overview","home"],["traffic","Traffic","chart"],["families","Families","users"],["people","People","user"],["billing","Billing","card"],["roadmap","Roadmap","map"],["support","Support","inbox"],["errors","Errors","alert"],["marketing","Marketing","chart"],["team","Team","users"],["settings","Settings","gear"]];
 let BILLING_ON = null;
 async function billingOn(){ if(BILLING_ON === null){ try { BILLING_ON = !!(await (await fetch("/api/billing", { cache: "no-store" })).json()).enabled; } catch(e){ BILLING_ON = false; } } return BILLING_ON; }
 const STATUS_LABEL = { trialing:"Trial", active:"Paying", past_due:"Past due", canceled:"Canceled", comped:"Comped", free:"Free", none:"No plan", expired:"Trial ended" };
@@ -238,7 +238,7 @@ function shell(){
 function go(v){ ST.view = v; history.replaceState(null, "", "#" + v); shell(); render(); }
 async function render(){
   const m = $("#main"); if(!m) return;
-  try { await ({ overview, traffic, families, people, billing, roadmap, inbox, support, errors, settings })[ST.view](m); }
+  try { await ({ overview, traffic, families, people, billing, roadmap, inbox, support, errors, marketing, team, settings })[ST.view](m); }
   catch(x){ m.innerHTML = `<div class="card"><h2>Couldn't load this page</h2><p class="sub">${esc(x.message || x)}</p></div>`; }
 }
 
@@ -444,7 +444,7 @@ async function settings(m){
   m.innerHTML = `<div class="head"><div><h1>Settings</h1><p class="sub">Who can open this admin site, and where things live.</p></div></div>
     <div class="grid two" style="margin-top:0">
       <div class="card"><h2>Admins</h2><div class="list" style="margin-top:6px">${(a.data||[]).map(x => `<div class="li"><div class="t"><b>${esc(x.email)}</b><small>${x.user_id ? "login linked" : "not signed in yet"}</small></div></div>`).join("")}</div>
-        <p class="sub" style="font-size:13px">To add an admin, add their email to the admin_emails table in Supabase. The first confirmed login with that email is linked to it.</p></div>
+        <p class="sub" style="font-size:13px">Add people, set their role and see the audit log on the <a href="#team" data-goto="team">Team</a> page.</p></div>
       <div class="card"><h2>Links</h2><div class="list" style="margin-top:6px">
         <div class="li"><div class="t"><b>Website</b><small><a href="https://www.heytribe.app" target="_blank" rel="noopener">www.heytribe.app</a></small></div></div>
         <div class="li"><div class="t"><b>App</b><small><a href="https://www.heytribe.app/app/" target="_blank" rel="noopener">www.heytribe.app/app</a></small></div></div>
@@ -630,6 +630,107 @@ async function errors(m){
   $("#rf").onclick = () => render();
 }
 
+/* ---------- authenticator step ---------- */
+// Every admin confirms a 6-digit code from an authenticator app each sign-in. The database refuses
+// admin data without it (is_admin() needs an aal2 session).
+async function mfaView(email){
+  const box = (inner) => { $("#root").innerHTML = `<div class="login"><form class="box card" id="mf" style="padding:28px"><div class="row" style="gap:8px;font-size:19px">${mark(26)}<span>hey<b style="font-weight:800">tribe</b></span><span class="pill" style="margin-left:auto">Admin</span></div>${inner}<p class="err" id="le"></p><button type="button" class="btn ghost sm" id="so" style="align-self:flex-start">Sign out</button></form></div>`; $("#so").onclick = () => sb.auth.signOut(); };
+  const f = await sb.auth.mfa.listFactors();
+  const totp = (f.data?.totp || []).find(x => x.status === "verified");
+  let factorId = totp?.id;
+  if(!factorId){
+    for(const x of (f.data?.all || []).filter(x => x.factor_type === "totp" && x.status !== "verified")) await sb.auth.mfa.unenroll({ factorId: x.id });
+    const en = await sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "Hey Tribe admin " + new Date().toISOString().slice(0,10) });
+    if(en.error){ box(`<h1 style="font-size:26px">Set up your authenticator</h1><p class="sub">${esc(en.error.message)}</p>`); return; }
+    factorId = en.data.id;
+    box(`<h1 style="font-size:26px">Set up your authenticator</h1><p class="sub" style="margin:0">${esc(email)} is an admin, so it needs a second step. Scan this with an authenticator app (1Password, Google Authenticator, Authy), then enter the 6-digit code it shows.</p>
+      <img src="${en.data.totp.qr_code}" alt="QR code for your authenticator app" width="180" height="180" style="align-self:center;background:#fff;border-radius:12px;padding:8px">
+      <p class="sub" style="font-size:12.5px;margin:0;word-break:break-all">Can't scan? Enter this key: <b>${esc(en.data.totp.secret)}</b></p>
+      <div class="field"><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div><button class="btn" style="justify-content:center">Confirm</button>`);
+  } else {
+    box(`<h1 style="font-size:26px">Enter your code</h1><p class="sub" style="margin:0">Open your authenticator app and enter the 6-digit code for Hey Tribe.</p>
+      <div class="field"><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></div><button class="btn" style="justify-content:center">Continue</button>`);
+  }
+  $("#mf").onsubmit = async e => {
+    e.preventDefault(); $("#le").textContent = "";
+    const r = await sb.auth.mfa.challengeAndVerify({ factorId, code: $("#code").value.trim() });
+    if(r.error){ $("#le").textContent = /invalid|expired/i.test(r.error.message) ? "That code didn't match. Try the newest one." : r.error.message; return; }
+    boot();
+  };
+}
+
+/* ---------- team ---------- */
+const ROLES = [["owner","Owner","everything, including the team"],["admin","Admin","everything except the team"],["support","Support","support, families and people"],["marketing","Marketing","marketing and traffic"],["readonly","Read only","looks, changes nothing"]];
+const roleName = r => (ROLES.find(x => x[0] === r) || [r, r])[1];
+async function team(m){
+  const owner = ST.me?.role === "owner", seeLog = owner || ST.me?.role === "admin";
+  const [rows, log] = await Promise.all([rpc("admin_team"), seeLog ? rpc("admin_audit_recent", { p_limit: 100 }) : Promise.resolve([])]);
+  m.innerHTML = `<div class="head"><div><h1>Team</h1><p class="sub">Who can open this admin and what they can do. Everyone signs in with their own login and an authenticator code.</p></div></div>
+    <div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Email</th><th>Role</th><th>Login</th><th>Authenticator</th><th>Last sign-in</th>${owner?"<th></th>":""}</tr></thead><tbody>
+      ${(rows||[]).map(r => `<tr><td><b>${esc(r.email)}</b>${r.email===ST.me?.email?` <span class="sub">(you)</span>`:""}</td><td>${owner && r.email!==ST.me?.email ? `<select data-role="${esc(r.email)}" aria-label="Role for ${esc(r.email)}">${ROLES.map(x => `<option value="${x[0]}" ${x[0]===r.role?"selected":""}>${x[1]}</option>`).join("")}</select>` : roleName(r.role)}</td><td>${r.linked?"Linked":`<span class="sub">Not signed in yet</span>`}</td><td>${r.mfa?"Set up":`<span class="badge">Not yet</span>`}</td><td>${fmtD(r.last_sign_in)}</td>${owner?`<td>${r.email!==ST.me?.email?`<button class="btn ghost sm" data-rm="${esc(r.email)}">Remove</button>`:""}</td>`:""}</tr>`).join("")}
+    </tbody></table></div></div>
+    ${owner ? `<div class="card" style="margin-top:16px"><h2>Add someone</h2><p class="sub" style="font-size:13px">They create their login on this page with that email. The first confirmed sign-in links it.</p>
+      <form id="tf" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center"><input id="t-em" class="search" type="email" placeholder="name@example.com" required style="flex:1 1 240px"><select id="t-ro">${ROLES.map(x => `<option value="${x[0]}" ${x[0]==="support"?"selected":""}>${x[1]}: ${x[2]}</option>`).join("")}</select><button class="btn sm">Add</button></form></div>` : `<p class="sub" style="margin-top:12px">Only an owner can add people or change roles.</p>`}
+    ${seeLog ? `<div class="card" style="margin-top:16px"><h2>Audit log</h2><p class="sub" style="font-size:13px">Every change made from the admin, newest first. Entries can't be edited or deleted.</p>
+      ${(log||[]).length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>What</th><th>On</th></tr></thead><tbody>${log.map(x => `<tr><td>${new Date(x.at).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</td><td>${esc(x.admin_email||"System")}</td><td>${esc(x.action)}</td><td>${esc(x.target_id||"")}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nothing yet.</div>`}</div>` : ""}`;
+  const fail = x => toast(/not allowed|42501/i.test(x.message||"") ? "Only an owner can change the team." : (x.message||"Something went wrong."));
+  m.querySelectorAll("[data-role]").forEach(sel => sel.onchange = async () => { try { await rpc("admin_team_set", { p_email: sel.dataset.role, p_role: sel.value }); toast("Role saved"); render(); } catch(x){ fail(x); render(); } });
+  m.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { if(b.dataset.arm){ try { await rpc("admin_team_remove", { p_email: b.dataset.rm }); toast("Removed"); render(); } catch(x){ fail(x); } } else { b.dataset.arm = "1"; b.textContent = "Tap again to remove"; } });
+  const tf = $("#tf"); if(tf) tf.onsubmit = async e => { e.preventDefault(); try { await rpc("admin_team_set", { p_email: $("#t-em").value, p_role: $("#t-ro").value }); toast("Added"); render(); } catch(x){ fail(x); } };
+}
+
+/* ---------- marketing ---------- */
+const CHANNEL = { paid:"Paid ads", organic:"Organic search", social:"Social", referral:"Referral", email:"Email", partner:"Partner", direct:"Direct", unknown:"Not tracked" };
+const PLATFORMS = ["meta","google","tiktok","apple_search_ads","reddit","other"];
+function csvCells(line){ const out = []; let cur = "", q = false; for(let i = 0; i < line.length; i++){ const c = line[i]; if(q){ if(c === '"' && line[i+1] === '"'){ cur += '"'; i++; } else if(c === '"') q = false; else cur += c; } else if(c === '"') q = true; else if(c === ","){ out.push(cur.trim()); cur = ""; } else cur += c; } out.push(cur.trim()); return out; }
+const CSV_HEAD = { date:"date", day:"date", reporting_starts:"date", platform:"platform", network:"platform", source:"platform", campaign:"campaign", campaign_name:"campaign", utm_campaign:"campaign", spend:"spend", cost:"spend", amount_spent:"spend", amount_spent_usd:"spend", impressions:"impressions", clicks:"clicks", link_clicks:"clicks", conversions:"conversions", results:"conversions" };
+function parseSpend(text, fallback){
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if(lines.length < 2) throw new Error("The file needs a header row and at least one row of data.");
+  if(lines.length > 5001) throw new Error("Import up to 5,000 rows at a time.");
+  const head = csvCells(lines[0]).map(h => CSV_HEAD[h.toLowerCase().replace(/[^a-z_]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"")] || null);
+  if(!head.includes("date") || !head.includes("spend")) throw new Error("Couldn't find a date and a spend column.");
+  return lines.slice(1).map(line => { const c = csvCells(line), r = {}; head.forEach((h,i) => { if(h && c[i] !== undefined) r[h] = c[i]; });
+    r.platform = (r.platform || fallback || "").toLowerCase(); if(!r.platform) throw new Error("Some rows have no platform. Pick one for the whole file.");
+    const d = new Date(r.date); if(!r.date || isNaN(d)) throw new Error(`"${r.date||""}" isn't a date.`); r.date = d.toISOString().slice(0,10);
+    r.spend = String(Number(String(r.spend||"0").replace(/[$,\s]/g,"")) || 0);
+    for(const k of ["impressions","clicks","conversions"]) r[k] = String(Math.round(Number(String(r[k]||"0").replace(/[,\s]/g,"")) || 0));
+    return r; });
+}
+async function marketing(m){
+  ST.mdays = ST.mdays || 30;
+  const d = await rpc("admin_marketing", { p_days: ST.mdays });
+  const edit = ST.me?.role !== "readonly";
+  const usd = n => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: n < 100 ? 2 : 0 });
+  const pc = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+  const spend = d.spend.reduce((a, r) => a + r.spend_cents, 0) / 100, signups = d.channels.reduce((a, r) => a + r.signups, 0), paid = d.channels.find(c => c.channel === "paid");
+  const cac = d.new_paying > 0 && spend > 0 ? spend / d.new_paying : null, top = Math.max(1, ...d.daily.map(x => x.signups));
+  const kpi = (l, v, s) => `<div class="card kpi"><div class="l">${l}</div><div class="v tab">${v}</div><div class="d">${s}</div></div>`;
+  m.innerHTML = `<div class="head"><div><h1>Marketing</h1><p class="sub">Where new families come from, what ads cost, and what each campaign brings back.</p></div>
+      <div class="row" style="gap:6px">${[7,30,90,365].map(n => `<button class="btn ${n===ST.mdays?"":"ghost"} sm" data-md="${n}">${n===365?"1 year":n+" days"}</button>`).join("")}</div></div>
+    <div class="grid kpis">${kpi("New families", signups, `${d.attributed_share ?? 0}% have a known source`)}${kpi("From paid ads", paid?.signups ?? 0, `${pc(paid?.paid ?? 0, paid?.signups ?? 0)} became paying`)}${kpi("Ad spend", usd(spend), `${d.spend.length} platform${d.spend.length===1?"":"s"}`)}${kpi("Cost per paying family", cac ? usd(cac) : "–", `${d.new_paying} new paying`)}</div>
+    <div class="card" style="margin-top:16px"><h2>New families by day</h2><div role="img" aria-label="New families per day" style="display:flex;align-items:flex-end;gap:2px;height:110px;margin-top:12px">${d.daily.map(x => `<span title="${x.date}: ${x.signups}" style="flex:1;min-width:2px;height:${Math.max(2, x.signups/top*100)}%;background:${x.signups?"var(--sage-ink)":"var(--line)"};border-radius:2px"></span>`).join("")}</div></div>
+    <div class="card" style="margin-top:16px"><h2>Channels</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Channel</th><th class="num">Families</th><th class="num">Second person joined</th><th class="num">Trials</th><th class="num">Paying</th><th class="num">To paying</th></tr></thead><tbody>${d.channels.length ? d.channels.map(c => `<tr><td>${CHANNEL[c.channel]||esc(c.channel)}</td><td class="num tab">${c.signups}</td><td class="num tab">${c.activated}</td><td class="num tab">${c.trials}</td><td class="num tab">${c.paid}</td><td class="num tab">${pc(c.paid, c.signups)}</td></tr>`).join("") : `<tr><td colspan="6" class="sub">No new families in this range.</td></tr>`}</tbody></table></div></div>
+    <div class="card" style="margin-top:16px"><h2>Campaigns</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Campaign</th><th>Source</th><th class="num">Families</th><th class="num">Paying</th><th class="num">Spend</th><th class="num">Cost per paying</th></tr></thead><tbody>${d.campaigns.length ? d.campaigns.map(c => `<tr><td>${esc(c.utm_campaign)}</td><td>${esc(c.source||"–")}</td><td class="num tab">${c.signups}</td><td class="num tab">${c.paid}</td><td class="num tab">${c.spend_cents ? usd(c.spend_cents/100) : "–"}</td><td class="num tab">${c.paid && c.spend_cents ? usd(c.spend_cents/100/c.paid) : "–"}</td></tr>`).join("") : `<tr><td colspan="6" class="sub">No tagged families yet. Add utm_campaign to ad and post links and they show up here.</td></tr>`}</tbody></table></div></div>
+    <div class="card" style="margin-top:16px"><h2>Spend by platform</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Platform</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">Clicks</th><th class="num">Conversions</th></tr></thead><tbody>${d.spend.length ? d.spend.map(x => `<tr><td>${esc(x.platform.replace(/_/g," "))}</td><td class="num tab">${usd(x.spend_cents/100)}</td><td class="num tab">${x.impressions.toLocaleString()}</td><td class="num tab">${x.clicks.toLocaleString()}</td><td class="num tab">${x.conversions.toLocaleString()}</td></tr>`).join("") : `<tr><td colspan="5" class="sub">No spend imported for this range.</td></tr>`}</tbody></table></div></div>
+    ${d.campaign_list.length ? `<div class="card" style="margin-top:16px"><h2>Planned campaigns</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Name</th><th>Tag</th><th>Platform</th><th class="num">Budget</th><th class="num">Target cost per paying</th><th>Status</th></tr></thead><tbody>${d.campaign_list.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.utm_campaign||"–")}</td><td>${esc(c.platform||"–")}</td><td class="num tab">${c.budget_cents?usd(c.budget_cents/100):"–"}</td><td class="num tab">${c.target_cac_cents?usd(c.target_cac_cents/100):"–"}</td><td>${esc(c.status)}</td></tr>`).join("")}</tbody></table></div></div>` : ""}
+    ${edit ? `<div class="grid two" style="margin-top:16px">
+      <div class="card"><h2>Import ad spend</h2><p class="sub" style="font-size:13px">Export a daily report from the ad platform and upload it. Columns are matched by name: date, campaign, spend, impressions, clicks, conversions. Importing a day again replaces it.</p>
+        <form id="sf" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><input id="s-file" type="file" accept=".csv,text/csv" required aria-label="CSV file"><select id="s-pl" aria-label="Platform"><option value="">Platform: from the file</option>${PLATFORMS.map(p => `<option value="${p}">${p.replace(/_/g," ")}</option>`).join("")}</select><button class="btn sm" style="align-self:flex-start">Import spend</button><p class="err" id="s-er"></p></form></div>
+      <div class="card"><h2>Plan a campaign</h2><form id="cf" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <input id="c-n" class="search" placeholder="Name" required style="grid-column:1/-1"><input id="c-u" class="search" placeholder="utm_campaign tag"><select id="c-p" aria-label="Platform">${PLATFORMS.map(p => `<option value="${p}">${p.replace(/_/g," ")}</option>`).join("")}</select>
+        <input id="c-b" class="search" inputmode="decimal" placeholder="Budget ($)"><input id="c-t" class="search" inputmode="decimal" placeholder="Target cost per paying ($)">
+        <label class="sub" style="font-size:12.5px">Start<input id="c-s" type="date" class="search" style="width:100%"></label><label class="sub" style="font-size:12.5px">End<input id="c-e" type="date" class="search" style="width:100%"></label>
+        <button class="btn sm" style="justify-self:start">Save campaign</button></form></div></div>` : ""}`;
+  m.querySelectorAll("[data-md]").forEach(b => b.onclick = () => { ST.mdays = Number(b.dataset.md); render(); });
+  const sf = $("#sf"); if(sf) sf.onsubmit = async e => { e.preventDefault(); $("#s-er").textContent = "";
+    try { const rows = parseSpend(await $("#s-file").files[0].text(), $("#s-pl").value); const n = await rpc("admin_import_spend", { p_rows: rows }); toast(`Imported ${n} rows, $${rows.reduce((a, r) => a + Number(r.spend), 0).toFixed(2)} of spend`); render(); }
+    catch(x){ $("#s-er").textContent = /42501|not allowed/i.test(x.message||"") ? "Your role can't import spend." : (x.message||"Something went wrong."); } };
+  const cf = $("#cf"); if(cf) cf.onsubmit = async e => { e.preventDefault(); const c = v => { v = String(v||"").replace(/[$,\s]/g,""); return v ? Math.round(Number(v)*100) : null; };
+    try { await rpc("admin_campaign_save", { p: { name: $("#c-n").value.trim(), utm_campaign: $("#c-u").value.trim() || null, platform: $("#c-p").value, channel: "paid", budget_cents: c($("#c-b").value), target_cac_cents: c($("#c-t").value), start_date: $("#c-s").value || null, end_date: $("#c-e").value || null, status: "active" } }); toast("Campaign saved"); render(); }
+    catch(x){ toast(x.message || "Couldn't save"); } };
+}
+
 /* ---------- boot ---------- */
 async function boot(){
   const { data } = await sb.auth.getSession();
@@ -637,11 +738,13 @@ async function boot(){
   try {
     const w = await rpc("admin_whoami");
     if(!w.admin) return deniedView(data.session.user.email);
+    if(w.mfa_required) return mfaView(w.email);
     ST.me = w; ST.stats = await rpc("admin_stats").catch(() => null);
     if(!VIEWS.some(v => v[0] === ST.view)) ST.view = "overview";
     shell(); render();
   } catch(x){ $("#root").innerHTML = `<div class="login"><div class="box card"><h1 style="font-size:26px">Can't reach the database</h1><p class="sub">${esc(x.message||x)}</p><button class="btn ghost" onclick="location.reload()">Try again</button></div></div>`; }
 }
+window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if(ST.me && VIEWS.some(x => x[0] === v) && v !== ST.view) go(v); });
 sb.auth.onAuthStateChange((ev) => { if(ev === "PASSWORD_RECOVERY") newPasswordView(); else if(ev === "SIGNED_IN" || ev === "SIGNED_OUT") boot(); });
 boot();
 })();

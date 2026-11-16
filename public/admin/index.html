@@ -630,44 +630,15 @@ async function errors(m){
   $("#rf").onclick = () => render();
 }
 
-/* ---------- authenticator step ---------- */
-// Every admin confirms a 6-digit code from an authenticator app each sign-in. The database refuses
-// admin data without it (is_admin() needs an aal2 session).
-async function mfaView(email){
-  const box = (inner) => { $("#root").innerHTML = `<div class="login"><form class="box card" id="mf" style="padding:28px"><div class="row" style="gap:8px;font-size:19px">${mark(26)}<span>hey<b style="font-weight:800">tribe</b></span><span class="pill" style="margin-left:auto">Admin</span></div>${inner}<p class="err" id="le"></p><button type="button" class="btn ghost sm" id="so" style="align-self:flex-start">Sign out</button></form></div>`; $("#so").onclick = () => sb.auth.signOut(); };
-  const f = await sb.auth.mfa.listFactors();
-  const totp = (f.data?.totp || []).find(x => x.status === "verified");
-  let factorId = totp?.id;
-  if(!factorId){
-    for(const x of (f.data?.all || []).filter(x => x.factor_type === "totp" && x.status !== "verified")) await sb.auth.mfa.unenroll({ factorId: x.id });
-    const en = await sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "Hey Tribe admin " + new Date().toISOString().slice(0,10) });
-    if(en.error){ box(`<h1 style="font-size:26px">Set up your authenticator</h1><p class="sub">${esc(en.error.message)}</p>`); return; }
-    factorId = en.data.id;
-    box(`<h1 style="font-size:26px">Set up your authenticator</h1><p class="sub" style="margin:0">${esc(email)} is an admin, so it needs a second step. Scan this with an authenticator app (1Password, Google Authenticator, Authy), then enter the 6-digit code it shows.</p>
-      <img src="${en.data.totp.qr_code}" alt="QR code for your authenticator app" width="180" height="180" style="align-self:center;background:#fff;border-radius:12px;padding:8px">
-      <p class="sub" style="font-size:12.5px;margin:0;word-break:break-all">Can't scan? Enter this key: <b>${esc(en.data.totp.secret)}</b></p>
-      <div class="field"><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div><button class="btn" style="justify-content:center">Confirm</button>`);
-  } else {
-    box(`<h1 style="font-size:26px">Enter your code</h1><p class="sub" style="margin:0">Open your authenticator app and enter the 6-digit code for Hey Tribe.</p>
-      <div class="field"><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></div><button class="btn" style="justify-content:center">Continue</button>`);
-  }
-  $("#mf").onsubmit = async e => {
-    e.preventDefault(); $("#le").textContent = "";
-    const r = await sb.auth.mfa.challengeAndVerify({ factorId, code: $("#code").value.trim() });
-    if(r.error){ $("#le").textContent = /invalid|expired/i.test(r.error.message) ? "That code didn't match. Try the newest one." : r.error.message; return; }
-    boot();
-  };
-}
-
 /* ---------- team ---------- */
 const ROLES = [["owner","Owner","everything, including the team"],["admin","Admin","everything except the team"],["support","Support","support, families and people"],["marketing","Marketing","marketing and traffic"],["readonly","Read only","looks, changes nothing"]];
 const roleName = r => (ROLES.find(x => x[0] === r) || [r, r])[1];
 async function team(m){
   const owner = ST.me?.role === "owner", seeLog = owner || ST.me?.role === "admin";
   const [rows, log] = await Promise.all([rpc("admin_team"), seeLog ? rpc("admin_audit_recent", { p_limit: 100 }) : Promise.resolve([])]);
-  m.innerHTML = `<div class="head"><div><h1>Team</h1><p class="sub">Who can open this admin and what they can do. Everyone signs in with their own login and an authenticator code.</p></div></div>
-    <div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Email</th><th>Role</th><th>Login</th><th>Authenticator</th><th>Last sign-in</th>${owner?"<th></th>":""}</tr></thead><tbody>
-      ${(rows||[]).map(r => `<tr><td><b>${esc(r.email)}</b>${r.email===ST.me?.email?` <span class="sub">(you)</span>`:""}</td><td>${owner && r.email!==ST.me?.email ? `<select data-role="${esc(r.email)}" aria-label="Role for ${esc(r.email)}">${ROLES.map(x => `<option value="${x[0]}" ${x[0]===r.role?"selected":""}>${x[1]}</option>`).join("")}</select>` : roleName(r.role)}</td><td>${r.linked?"Linked":`<span class="sub">Not signed in yet</span>`}</td><td>${r.mfa?"Set up":`<span class="badge">Not yet</span>`}</td><td>${fmtD(r.last_sign_in)}</td>${owner?`<td>${r.email!==ST.me?.email?`<button class="btn ghost sm" data-rm="${esc(r.email)}">Remove</button>`:""}</td>`:""}</tr>`).join("")}
+  m.innerHTML = `<div class="head"><div><h1>Team</h1><p class="sub">Who can open this admin and what they can do. Everyone signs in with their own login.</p></div></div>
+    <div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Email</th><th>Role</th><th>Login</th><th>Last sign-in</th>${owner?"<th></th>":""}</tr></thead><tbody>
+      ${(rows||[]).map(r => `<tr><td><b>${esc(r.email)}</b>${r.email===ST.me?.email?` <span class="sub">(you)</span>`:""}</td><td>${owner && r.email!==ST.me?.email ? `<select data-role="${esc(r.email)}" aria-label="Role for ${esc(r.email)}">${ROLES.map(x => `<option value="${x[0]}" ${x[0]===r.role?"selected":""}>${x[1]}</option>`).join("")}</select>` : roleName(r.role)}</td><td>${r.linked?"Linked":`<span class="sub">Not signed in yet</span>`}</td><td>${fmtD(r.last_sign_in)}</td>${owner?`<td>${r.email!==ST.me?.email?`<button class="btn ghost sm" data-rm="${esc(r.email)}">Remove</button>`:""}</td>`:""}</tr>`).join("")}
     </tbody></table></div></div>
     ${owner ? `<div class="card" style="margin-top:16px"><h2>Add someone</h2><p class="sub" style="font-size:13px">They create their login on this page with that email. The first confirmed sign-in links it.</p>
       <form id="tf" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center"><input id="t-em" class="search" type="email" placeholder="name@example.com" required style="flex:1 1 240px"><select id="t-ro">${ROLES.map(x => `<option value="${x[0]}" ${x[0]==="support"?"selected":""}>${x[1]}: ${x[2]}</option>`).join("")}</select><button class="btn sm">Add</button></form></div>` : `<p class="sub" style="margin-top:12px">Only an owner can add people or change roles.</p>`}
@@ -738,7 +709,6 @@ async function boot(){
   try {
     const w = await rpc("admin_whoami");
     if(!w.admin) return deniedView(data.session.user.email);
-    if(w.mfa_required) return mfaView(w.email);
     ST.me = w; ST.stats = await rpc("admin_stats").catch(() => null);
     if(!VIEWS.some(v => v[0] === ST.view)) ST.view = "overview";
     shell(); render();

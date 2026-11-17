@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "HeyTribe",
+    "slug": "heytribe",
+    "scheme": "heytribe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "app.heytribe.ios",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:www.heytribe.app"
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.heytribe.android",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#E2EFEA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#FBFCFA",
+          "dark": {
+            "backgroundColor": "#151B1F"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-localization",
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "color": "#527F6D"
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

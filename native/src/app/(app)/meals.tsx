@@ -10,6 +10,8 @@ import { Screen } from "@/ui/Screen";
 import { useSave } from "@/ui/useSave";
 import { useColors } from "@/ui/theme";
 import { sectionFor } from "@/lib/grocery";
+import { usePremium } from "@/lib/premium";
+import { router } from "expo-router";
 
 type Wk = "this" | "next";
 
@@ -23,6 +25,7 @@ export default function Meals() {
   const [day, setDay] = useState<string | null>(null);
   const [dish, setDish] = useState(""), [ing, setIng] = useState(""), [addIng, setAddIng] = useState(false);
   const k = todayKey();
+  const { limited } = usePremium();
   const days = weekDays(wk === "this" ? monday() : addDays(monday(), 7));
   const get = (d: string) => meals.find(m => m.id === d);
 
@@ -42,7 +45,7 @@ export default function Meals() {
   };
 
   return (
-    <Screen title="Meals" pills={<Pills<Wk> items={[{ key: "this", label: "This week" }, { key: "next", label: "Next week" }]} value={wk} onChange={setWk} />}>
+    <Screen title="Meals" pills={<Pills<Wk> items={[{ key: "this", label: "This week" }, { key: "next", label: "Next week" }]} value={wk} onChange={w => { if (w === "next" && limited) { toast({ text: "Planning ahead is a Premium extra." }); router.push("/premium"); return; } setWk(w); }} />}>
       <Rows>{days.map(d => {
         const m = get(d);
         return <Row key={d} title={m?.dish || "Plan dinner"} onPress={() => openDay(d)}
@@ -53,7 +56,7 @@ export default function Meals() {
       <Sheet open={!!day} onClose={() => setDay(null)} title={day ? `Dinner · ${relDay(day)}` : ""}>
         <Field label="What's for dinner" placeholder="Tacos" value={dish} onChangeText={setDish} maxLength={60} />
         <Field label="Ingredients (comma separated)" placeholder="tortillas, ground beef, salsa, cheese" value={ing} onChangeText={setIng} multiline />
-        {ing.trim() ? <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        {ing.trim() && !limited ? <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <T weight="medium">Add ingredients to Groceries</T>
           <Switch value={addIng} onValueChange={setAddIng} trackColor={{ true: c.sageBtn }} accessibilityLabel="Add ingredients to Groceries" />
         </View> : null}

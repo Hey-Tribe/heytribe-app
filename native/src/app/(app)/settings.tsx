@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Linking, View } from "react-native";
 import * as Application from "expo-application";
 import { useSession } from "@/lib/session";
@@ -7,17 +7,40 @@ import { SAMPLE, SITE } from "@/lib/config";
 import { Button, Card, Confirm, Field, H2, Row, Rows, Sheet, T, useToast } from "@/ui/kit";
 import { Screen } from "@/ui/Screen";
 import { useColors } from "@/ui/theme";
+import { router } from "expo-router";
+import { usePremium } from "@/lib/premium";
+import { loadReminder, REM_TYPES, remindersOff, remindersOn, setPrefs, type PushRow } from "@/lib/push";
 
 export default function Settings() {
-  const { session, families, code, open, signOut, leaveFamily, deleteAccount } = useSession();
+  const { session, families, code, me, open, signOut, leaveFamily, deleteAccount } = useSession();
   const fam = useFamily(), toast = useToast(), c = useColors();
+  const premium = usePremium();
   const [leave, setLeave] = useState(false), [del, setDel] = useState(false);
   const [word, setWord] = useState(""), [err, setErr] = useState<string | null>(null), [busy, setBusy] = useState(false);
   const sample = code === SAMPLE;
+  const [rem, setRem] = useState<PushRow | null | undefined>(undefined);
+  const [remBusy, setRemBusy] = useState(false);
+  useEffect(() => { if (session && !sample) loadReminder().then(setRem, () => setRem(null)); }, [session, sample]);
+  const prefs = { plans: true, meds: true, bills: true, school: true, countdowns: true, ...(rem?.prefs || {}) } as Record<string, boolean>;
+  const turnOn = async () => {
+    setRemBusy(true);
+    try {
+      const r = await remindersOn(code!, me);
+      if (r === "denied") toast({ text: "Notifications are off for HeyTribe. Turn them on in Settings › HeyTribe › Notifications." });
+      else { setRem(r); toast({ text: "Reminders are on for this phone" }); }
+    } catch { toast({ text: "Couldn't turn on reminders. Try again." }); }
+    setRemBusy(false);
+  };
 
   return (
     <Screen title="Settings">
       {session ? <View><H2>Account</H2><Card style={{ gap: 4 }}><T size={13} muted>Signed in as</T><T weight="medium">{session.user.email || "Apple account"}</T></Card></View> : null}
+
+      {session && !sample ? <View><H2>Your plan</H2><Rows>
+        <Row title={premium.premium ? (premium.plan?.status === "trialing" ? "Premium trial" : "Premium") : "Free plan"}
+          sub={premium.plan?.status === "trialing" && premium.trialDays > 0 ? `${premium.trialDays} ${premium.trialDays === 1 ? "day" : "days"} left` : "See plans and extras"}
+          onPress={() => router.push("/premium")} />
+      </Rows></View> : null}
 
       <View><H2>Families</H2>
         <Rows>
@@ -26,6 +49,25 @@ export default function Settings() {
             onPress={() => open(sample ? families[0]?.tribe_code || null : SAMPLE)} />
         </Rows>
       </View>
+
+      {session && !sample ? <View><H2>Reminders on this phone</H2>
+        <Card style={{ gap: 12 }}>
+          {rem ? <>
+            <T muted>Pick what you get reminded about.</T>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {REM_TYPES.map(([k, l]) => (
+                <Button key={k} label={l} kind={prefs[k] !== false ? "primary" : "secondary"} style={{ paddingHorizontal: 14, minHeight: 40 }}
+                  accessibilityHint={prefs[k] !== false ? "On. Tap to turn off" : "Off. Tap to turn on"}
+                  onPress={() => { const next = { ...prefs, [k]: !(prefs[k] !== false) }; setRem({ ...rem, prefs: next }); setPrefs(next, me).catch(() => {}); }} />
+              ))}
+            </View>
+            <Button label="Turn off reminders" kind="quiet" onPress={async () => { await remindersOff().catch(() => {}); setRem(null); toast({ text: "Reminders are off for this phone" }); }} />
+          </> : <>
+            <T muted>Get a heads-up before plans, medicine times, bills and school forms that are due.</T>
+            <Button label="Turn on reminders" busy={remBusy || rem === undefined} onPress={turnOn} />
+          </>}
+        </Card>
+      </View> : null}
 
       <View><H2>Help and legal</H2>
         <Rows>

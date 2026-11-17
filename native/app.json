@@ -2,7 +2,10 @@
   "expo": {
     "name": "HeyTribe",
     "slug": "heytribe",
-    "scheme": "heytribe",
+    "scheme": [
+      "heytribe",
+      "app.heytribe.ios"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -59,7 +62,8 @@
           "color": "#527F6D"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": true

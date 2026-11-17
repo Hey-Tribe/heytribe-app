@@ -4,11 +4,13 @@ import { ENT } from "@/lib/entities";
 import { useCol, useFamily } from "@/lib/store";
 import { useSession } from "@/lib/session";
 import { sortMembers } from "@/lib/family";
-import type { Member } from "@/lib/types";
+import type { Member, Routine } from "@/lib/types";
 import { Button, Choice, Confirm, Field, Sheet, T, useToast } from "./kit";
 import { MemberPicker } from "./pickers";
 import { DateField } from "./when";
 import { useSave } from "./useSave";
+import { usePremium } from "@/lib/premium";
+import { router } from "expo-router";
 import { useColors } from "./theme";
 
 export type EntEdit = { kind: string; rec?: any; preset?: Record<string, unknown> } | null;
@@ -18,6 +20,9 @@ export function EntSheet({ value, onClose }: { value: EntEdit; onClose: () => vo
   const fam = useFamily(), save = useSave(), toast = useToast(), c = useColors();
   const { me } = useSession();
   const members = sortMembers(useCol<Member>("members"));
+  const routines = useCol<Routine>("routines");
+  const { limited } = usePremium();
+  const upsell = (msg: string) => { onClose(); toast({ text: msg, undo: undefined }); router.push("/premium"); };
   const E = value ? ENT[value.kind] : null;
   const [v, setV] = useState<Record<string, any>>({});
   const [seen, setSeen] = useState<EntEdit>(null);
@@ -46,6 +51,11 @@ export function EntSheet({ value, onClose }: { value: EntEdit; onClose: () => vo
       data[f.name] = val;
     }
     if (E.toData) { data = E.toData(data, value.rec || {}); if (data?.error) return setErr(data.error); }
+    if (limited && value.kind === "countdown" && data.yearly && !value.rec?.yearly) return upsell("Yearly repeats for birthdays and holidays are a Premium extra.");
+    if (limited && value.kind === "routine") {
+      if (!id && routines.filter(r => r.member === data.member).length >= 2) return upsell("Free families get two routines per person. Premium makes it unlimited.");
+      if ((data.steps || []).length > 8) return setErr("Free routines have up to 8 steps. Premium allows 20.");
+    }
     if (id) save(fam.merge(E.col, id, data), "Saved");
     else save(fam.set(E.col, null, { ...data, by: me || undefined, at: Date.now() }), "Added");
     onClose();

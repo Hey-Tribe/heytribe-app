@@ -11,6 +11,10 @@ The repo is a Next.js app (App Router, `src/app`). `npm run dev` runs it locally
   The Stripe webhook is a route handler in `src/app/api/stripe-webhook/route.js`.
 - Security headers and redirects live in `vercel.json`; rewrites (`/app/`, `/admin/`, `/sitter/`, `.well-known`) in
   `next.config.mjs`. The admin host is routed by `src/middleware.js`.
+- Three Vercel projects build this repo. **heytribe** (app.heytribe.app) holds every server key and runs the server
+  functions. **heytribe-site** (www.heytribe.app, heytribe.app) and **heytribe-admin** (admin.heytribe.app) set
+  `HT_API_ORIGIN=https://app.heytribe.app`, so their `/api/...` and `.well-known` calls go to the app project.
+  Add new server keys to the heytribe project only.
 
 ## The app (/app) is built from source
 - Edit `spa/index.html` (page shell), `spa/app.js` (all app code) and `spa/app.css` (styles).

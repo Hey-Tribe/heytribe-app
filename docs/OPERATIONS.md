@@ -36,6 +36,11 @@ The app talks to the production Supabase project even locally. The sample family
 
 Values live only in Vercel. Never commit them.
 
+Three Vercel projects build this repo: **heytribe** (app.heytribe.app), **heytribe-site** (www.heytribe.app and
+heytribe.app) and **heytribe-admin** (admin.heytribe.app). Every key below goes in the **heytribe** project only.
+The site and admin projects have one setting, `HT_API_ORIGIN=https://app.heytribe.app`, which sends their `/api/...`
+and `.well-known` calls to the heytribe project. Webhooks and the reminder job keep using www.heytribe.app.
+
 | Name | Needed for | Set? (Oct 26, 2026) |
 |---|---|---|
 | SUPABASE_URL, SUPABASE_ANON_KEY | Everything | Yes |

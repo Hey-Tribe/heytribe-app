@@ -889,8 +889,7 @@ const I = {
   wrench:'<path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/>'
 };
 const ico = (n, s=22, sw=1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]||""}</svg>`;
-const BUBBLE = 'M30 0H90A30 30 0 0 1 120 30V58A30 30 0 0 1 90 88H46L22 110V88A22 24 0 0 1 0 64V30A30 30 0 0 1 30 0Z';
-const mark = (w, bubble="var(--sage)", dots="var(--bg)") => `<svg width="${w}" height="${Math.round(w*112/120)}" viewBox="0 0 120 112" aria-hidden="true"><path d="${BUBBLE}" style="fill:${bubble}"/><circle cx="35" cy="44" r="11" style="fill:${dots}"/><circle cx="63" cy="44" r="11" style="fill:${dots}"/><circle cx="88" cy="49" r="7" style="fill:${dots}"/></svg>`;
+const mark = (w, body="var(--sage)", heart="var(--sage-ink, #173029)") => `<svg width="${w}" height="${Math.round(w*78/76)}" viewBox="12 10 76 78" aria-hidden="true"><rect x="14" y="20" width="72" height="66" rx="14" fill="none" style="stroke:${body}" stroke-width="6"/><path d="M14 34 A14 14 0 0 1 28 20 H72 A14 14 0 0 1 86 34 V40 H14 Z" style="fill:${body}"/><path d="M34 12 V26 M66 12 V26" fill="none" style="stroke:${body}" stroke-width="6" stroke-linecap="round"/><path transform="translate(50 60) scale(0.95)" d="M0 16 C-14 7 -18 0 -15 -6 C-12 -12 -4 -11 0 -5 C4 -11 12 -12 15 -6 C18 0 14 7 0 16 Z" style="fill:${heart}"/></svg>`;
 const scrib = () => `<svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M1 6 C 15 2, 25 9, 40 5 S 70 2, 99 5" fill="none" stroke="var(--sage)" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>`;
 const squiggle = w => `<svg width="${w}" height="12" viewBox="0 0 120 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 22 2, 38 11, 60 6 S 98 2, 118 7" fill="none" stroke="var(--sage)" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
 const TICK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
@@ -983,7 +982,7 @@ function renderSide(){
   const item = (v, ic, l) => `<button class="side-i ${cur===v?"on":""}" data-go="${v}">${ico(ic,19,cur===v?2.1:1.8)}<span>${l}</span></button>`;
   const ICON = { calendar:"cal", lists:"cart", menu:"pot", trips:"plane", chores:"check", routines:"sun", school:"book", baby:"bottle", home:"dollar", health:"heart", docs:"file", contacts:"phone", sitter:"shield" };
   const sec = g => `<div class="side-g"><span class="side-h">${GROUPS[g].label}</span>${GROUPS[g].views.map(([v,l]) => item(v, ICON[v] || "note", l)).join("")}${g==="kids"?`<button class="side-i" data-act="kid-pick">${ico("smile",19,1.8)}<span>Kid view</span></button>`:""}</div>`;
-  side.innerHTML = `<div class="side-top"><div class="row" style="gap:8px">${mark(26)}<span style="font-size:19px">hey<b style="font-weight:800">tribe</b></span></div>
+  side.innerHTML = `<div class="side-top"><div class="row" style="gap:8px">${mark(26)}<span class="ht-word" style="font-size:19px">Hey Tribe</span></div>
     <button class="side-tribe" data-go="family"><span class="col" style="min-width:0;text-align:left"><b>${esc(S.tribe?.name || "Your tribe")}</b><small>Code ${esc(TRIBE||"")}</small></span>${ico("fwd",16,2)}</button></div>
     <button class="side-ht" data-act="ht">${mark(22,"#fff","var(--sage)")}<span>Tell Hey Tribe</span></button>
     <button class="side-i" data-act="search" style="border:1px solid var(--line)">${ico("search",18,1.9)}<span class="grow">Search</span><span class="small" style="border:1px solid var(--line);border-radius:6px;padding:0 6px">/</span></button>
@@ -1079,7 +1078,7 @@ function agreeLine(){ return `<p class="small" style="margin:0;line-height:1.45"
 function helpLine(){ return `<p class="small help-line" style="margin:0">Need help? <a href="/help.html" target="_blank" rel="noopener">Help center</a> · <a href="/contact.html" target="_blank" rel="noopener">Contact us</a></p>`; }
 function authScreen(){
   const m = UI.auth || "signin";
-  const logo = `<div class="row" style="gap:8px">${mark(26)}<span style="font-size:19px">hey<b style="font-weight:800">tribe</b></span></div>`;
+  const logo = `<div class="row" style="gap:8px">${mark(26)}<span class="ht-word" style="font-size:19px">Hey Tribe</span></div>`;
   const email = (v="") => `<div class="field"><label for="au-email">Email</label><input id="au-email" name="email" type="${m==="signin"?"text":"email"}" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="username" required value="${esc(v)}" ${m!=="reset" && !NATIVE && matchMedia("(pointer:fine)").matches?"autofocus":""}></div>`;
   const pw = (id, label, ac) => `<div class="field"><label for="${id}">${label}</label><input id="${id}" name="${id==="au-pw2"?"password2":"password"}" type="password" minlength="8" autocomplete="${ac}" required></div>`;
   const err = `<p class="form-err small" id="au-err" role="alert">${esc(UI.authErr||"")}</p>`;
@@ -1119,7 +1118,7 @@ function pendingScreen(){
 }
 function welcome(){
   const o = UI.onboard, known = knownTribes();
-  const logo = `<div class="row" style="gap:8px">${mark(26)}<span style="font-size:19px">hey<b style="font-weight:800">tribe</b></span></div>`;
+  const logo = `<div class="row" style="gap:8px">${mark(26)}<span class="ht-word" style="font-size:19px">Hey Tribe</span></div>`;
   const choice = (mode, ic, tone, t, s) => `<button class="choice" data-act="onboard" data-mode="${mode}"><span class="lic" style="background:var(--m-${tone}-bg);color:var(--m-${tone})">${ico(ic,24)}</span><span class="col grow"><b style="font-weight:600;font-size:16px">${t}</b><span class="small">${s}</span></span>${ico("fwd",18,2)}</button>`;
   let body;
   if(o === "create") body = `<form data-form="create-tribe" class="col" style="gap:14px">
@@ -1152,7 +1151,7 @@ function welcome(){
 }
 function setup(){
   return `<div class="col" style="gap:18px;padding-top:24px">
-    <div class="row" style="gap:8px">${mark(24)}<span style="font-size:18px">hey<b style="font-weight:800">tribe</b></span></div>
+    <div class="row" style="gap:8px">${mark(24)}<span class="ht-word" style="font-size:18px">Hey Tribe</span></div>
     <h1 class="title">${esc(S.tribe?.name || "Your tribe")} is ready</h1>
     <div class="empty"><span class="hand">nobody here yet</span>Add yourself first, then your partner and kids.</div>
     <button class="btn dark" data-act="member-new">Add a family member</button>
@@ -2020,7 +2019,7 @@ function htSheet(){
   htPending = null;
   const ex = ["Dentist for Leo next Tuesday at 3, Maria drives","Add milk and diapers to the list","Swim lessons every Saturday at 10","Leo: feed the dog every day"];
   openSheet(`<div class="col" style="gap:16px">
-    <div class="between"><div class="row" style="gap:8px">${mark(28,"var(--night-ink)","var(--night-b)")}<span style="font-size:19px">hey<b style="font-weight:800">tribe</b></span></div><button class="small" style="color:rgba(255,255,255,.75)" data-act="close">Close</button></div>
+    <div class="between"><div class="row" style="gap:8px">${mark(28,"var(--night-ink)","var(--night-b)")}<span class="ht-word" style="font-size:19px">Hey Tribe</span></div><button class="small" style="color:rgba(255,255,255,.75)" data-act="close">Close</button></div>
     <form data-form="ht" class="col" style="gap:12px"><label for="ht-text" class="small" style="color:rgba(255,255,255,.75)">Type it the way you'd say it. Plans, list items, chores or notes.</label>
       <textarea id="ht-text" name="text" class="ht-input" maxlength="400" placeholder="Swim lessons for Leo Saturday at 10…" autofocus></textarea>
       <div class="chips">${ex.map(t=>`<button type="button" class="ht-chip" data-ex="${esc(t)}">${esc(t)}</button>`).join("")}</div>

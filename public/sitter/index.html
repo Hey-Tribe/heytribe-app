@@ -14,7 +14,8 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/atkinson.woff2" as="font" type="font/woff2" crossorigin>
-<style>@font-face{font-family:"Atkinson Hyperlegible Next";font-style:normal;font-weight:200 800;font-display:swap;src:url(/assets/fonts/atkinson.woff2) format("woff2")}@font-face{font-family:"Atkinson Hyperlegible Next";font-style:italic;font-weight:200 800;font-display:swap;src:url(/assets/fonts/atkinson-italic.woff2) format("woff2")}</style>
+<style>@font-face{font-family:"Atkinson Hyperlegible Next";font-style:normal;font-weight:200 800;font-display:swap;src:url(/assets/fonts/atkinson.woff2) format("woff2")}@font-face{font-family:"Atkinson Hyperlegible Next";font-style:italic;font-weight:200 800;font-display:swap;src:url(/assets/fonts/atkinson-italic.woff2) format("woff2")}@font-face{font-family:'HT Logo';src:url(/assets/fonts/fredoka-logo.woff2) format('woff2');font-weight:600;font-display:swap}.ht-word{font-family:'HT Logo','Fredoka',system-ui,sans-serif;font-weight:600;letter-spacing:-.01em}
+</style>
 <style>
 :root{--bg:#FBFCFA;--surface:#fff;--ink:#2F3B45;--muted:#606A73;--line:#E1E6E1;--sage:#5E8C7A;--sage-ink:#46705F;--sage-soft:#E6EEE9;--rose-ink:#8E6A64;
 --m-sage:#5E8C7A;--m-sage-bg:#D7E5DC;--m-blue:#6B8BA4;--m-blue-bg:#D9E3EB;--m-rose:#B08A84;--m-rose-bg:#EFE0DC;--m-olive:#8A8F6B;--m-olive-bg:#E6E8D7;--m-sand:#C9A66B;--m-sand-bg:#F1E7D3;
@@ -63,7 +64,7 @@ function face(m, size=36){
 }
 const ico = p => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const PILL = '<path d="M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z"/><path d="M7 7l7 7"/>', MOON = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', PHONE = '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>';
-const logo = `<a class="logo" href="/"><svg width="26" height="24" viewBox="0 0 120 112" aria-hidden="true"><path d="M30 0H90A30 30 0 0 1 120 30V58A30 30 0 0 1 90 88H46L22 110V88A22 24 0 0 1 0 64V30A30 30 0 0 1 30 0Z" fill="#5E8C7A"/><circle cx="35" cy="44" r="11" fill="#fff"/><circle cx="63" cy="44" r="11" fill="#fff"/><circle cx="88" cy="49" r="7" fill="#fff"/></svg><span>hey<b style="font-weight:800">tribe</b></span></a>`;
+const logo = `<a class="logo" href="/"><svg width="26" height="27" viewBox="12 10 76 78" aria-hidden="true"><rect x="14" y="20" width="72" height="66" rx="14" fill="none" stroke="#5E8C7A" stroke-width="6"/><path d="M14 34 A14 14 0 0 1 28 20 H72 A14 14 0 0 1 86 34 V40 H14 Z" fill="#5E8C7A"/><path d="M34 12 V26 M66 12 V26" fill="none" stroke="#5E8C7A" stroke-width="6" stroke-linecap="round"/><path transform="translate(50 60) scale(0.95)" d="M0 16 C-14 7 -18 0 -15 -6 C-12 -12 -4 -11 0 -5 C4 -11 12 -12 15 -6 C18 0 14 7 0 16 Z" fill="#173029"/></svg><span class="ht-word">Hey Tribe</span></a>`;
 const t = new URLSearchParams(location.search).get("t") || "";
 fetch(CFG.supabaseUrl + "/rest/v1/rpc/sitter_sheet", { method: "POST", headers: { apikey: CFG.supabaseKey || CFG.supabaseAnonKey, "content-type": "application/json" }, body: JSON.stringify({ p_token: t }) })
   .then(r => r.ok ? r.json() : null).then(d => {

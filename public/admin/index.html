@@ -11,7 +11,8 @@
 <meta name="apple-mobile-web-app-title" content="HT Admin">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F6F8F6">
-<style>@font-face{font-family:"Atkinson Hyperlegible Next";font-style:normal;font-weight:200 800;font-display:swap;src:url(/assets/fonts/atkinson.woff2) format("woff2")}</style>
+<style>@font-face{font-family:"Atkinson Hyperlegible Next";font-style:normal;font-weight:200 800;font-display:swap;src:url(/assets/fonts/atkinson.woff2) format("woff2")}@font-face{font-family:'HT Logo';src:url(/assets/fonts/fredoka-logo.woff2) format('woff2');font-weight:600;font-display:swap}.ht-word{font-family:'HT Logo','Fredoka',system-ui,sans-serif;font-weight:600;letter-spacing:-.01em}
+</style>
 <style>
 :root{
   --bg:#F6F8F6;--surface:#FFFFFF;--ink:#2F3B45;--muted:#606A73;--faint:#98A1A6;--line:#E1E6E1;
@@ -173,7 +174,7 @@ const ICON = {
   map:'<path d="M9 4l6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/>', inbox:'<path d="M4 13l2-8h12l2 8v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/>', chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
 };
 const ico = (n, s=18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]||""}</svg>`;
-const mark = w => `<svg width="${w}" height="${Math.round(w*112/120)}" viewBox="0 0 120 112" aria-hidden="true"><path d="M30 0H90A30 30 0 0 1 120 30V58A30 30 0 0 1 90 88H46L22 110V88A22 24 0 0 1 0 64V30A30 30 0 0 1 30 0Z" fill="#5E8C7A"/><circle cx="35" cy="44" r="11" fill="#fff"/><circle cx="63" cy="44" r="11" fill="#fff"/><circle cx="88" cy="49" r="7" fill="#fff"/></svg>`;
+const mark = w => `<svg width="${w}" height="${Math.round(w*78/76)}" viewBox="12 10 76 78" aria-hidden="true"><rect x="14" y="20" width="72" height="66" rx="14" fill="none" stroke="#5E8C7A" stroke-width="6"/><path d="M14 34 A14 14 0 0 1 28 20 H72 A14 14 0 0 1 86 34 V40 H14 Z" fill="#5E8C7A"/><path d="M34 12 V26 M66 12 V26" fill="none" stroke="#5E8C7A" stroke-width="6" stroke-linecap="round"/><path transform="translate(50 60) scale(0.95)" d="M0 16 C-14 7 -18 0 -15 -6 C-12 -12 -4 -11 0 -5 C4 -11 12 -12 15 -6 C18 0 14 7 0 16 Z" fill="#173029"/></svg>`;
 const ST = { stats:null, view: (location.hash.slice(1) || "overview"), me:null };
 const VIEWS = [["overview","Overview","home"],["traffic","Traffic","chart"],["families","Families","users"],["people","People","user"],["billing","Billing","card"],["roadmap","Roadmap","map"],["support","Support","inbox"],["errors","Errors","alert"],["marketing","Marketing","chart"],["team","Team","users"],["settings","Settings","gear"]];
 let BILLING_ON = null;
@@ -187,7 +188,7 @@ async function rpc(name, args){ const r = await sb.rpc(name, args || {}); if(r.e
 function loginView(mode, msg){
   mode = mode || "in";
   $("#root").innerHTML = `<div class="login"><form class="box card" id="lf" style="padding:28px">
-    <div class="row" style="gap:8px;font-size:19px">${mark(26)}<span>hey<b style="font-weight:800">tribe</b></span><span class="pill" style="margin-left:auto">Admin</span></div>
+    <div class="row" style="gap:8px;font-size:19px">${mark(26)}<span class="ht-word">Hey Tribe</span><span class="pill" style="margin-left:auto">Admin</span></div>
     <h1 style="font-size:28px">${mode === "up" ? "Create your admin login" : mode === "reset" ? "Reset your password" : "Sign in"}</h1>
     ${msg ? `<p class="sub" style="margin:0">${esc(msg)}</p>` : ""}
     <div class="field"><label for="em">${mode === "in" ? "Username or email" : "Email"}</label><input id="em" type="${mode === "in" ? "text" : "email"}" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
@@ -228,7 +229,7 @@ function deniedView(email){
 function shell(){
   const n = ST.stats?.tickets_open || 0;
   $("#root").innerHTML = `<div class="shell"><aside class="side">
-    <div class="brand">${mark(24)}<span>hey<b>tribe</b></span><span class="tag">Admin</span></div>
+    <div class="brand">${mark(24)}<span class="ht-word">Hey Tribe</span><span class="tag">Admin</span></div>
     ${VIEWS.map(([v,l,i]) => `<button class="nav ${ST.view===v?"on":""}" data-v="${v}">${ico(i)}<span>${l}</span>${v==="support"&&n?`<span class="n">${n}</span>`:""}${v==="errors"&&ST.stats?.errors_24h?`<span class="n">${ST.stats.errors_24h}</span>`:""}</button>`).join("")}
     <div class="me"><span>${esc(ST.me?.email||"")}</span><a href="https://www.heytribe.app/app/" target="_blank" rel="noopener">Open the app</a><button style="text-align:left;color:var(--sage-ink);font-weight:600" id="so">Sign out</button></div>
   </aside><main class="main" id="main"><div class="empty">Loading…</div></main></div>`;

@@ -394,3 +394,4 @@ h1.title em{color:inherit;font-style:normal}
 .cd-n{font-size:40px}
 .hand{display:inline-block}
 .hand::first-letter{text-transform:uppercase}
+@font-face{font-family:'HT Logo';src:url(/assets/fonts/fredoka-logo.woff2) format('woff2');font-weight:600;font-display:swap}.ht-word{font-family:'HT Logo','Fredoka',system-ui,sans-serif;font-weight:600;letter-spacing:-.01em}

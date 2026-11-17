@@ -5,16 +5,30 @@ export type Database = {
   
   "public": {
           Tables: {
-            "admin_emails": {
+            "admin_audit_log": {
                   Row: {
-                    "added_at": string,"email": string,"user_id": string | null
+                    "action": string,"admin_email": string | null,"admin_id": string | null,"after": Json | null,"at": string,"before": Json | null,"id": number,"ip": string | null,"reason": string | null,"target_id": string | null,"target_type": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "added_at"?: string,"email": string,"user_id"?: string | null
+                    "action": string,"admin_email"?: string | null,"admin_id"?: string | null,"after"?: Json | null,"at"?: string,"before"?: Json | null,"id"?: never,"ip"?: string | null,"reason"?: string | null,"target_id"?: string | null,"target_type"?: string | null
                   }
                   Update: {
-                    "added_at"?: string,"email"?: string,"user_id"?: string | null
+                    "action"?: string,"admin_email"?: string | null,"admin_id"?: string | null,"after"?: Json | null,"at"?: string,"before"?: Json | null,"id"?: never,"ip"?: string | null,"reason"?: string | null,"target_id"?: string | null,"target_type"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"admin_emails": {
+                  Row: {
+                    "added_at": string,"email": string,"role": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "added_at"?: string,"email": string,"role"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "added_at"?: string,"email"?: string,"role"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     
@@ -53,6 +67,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"app_daily_metrics": {
+                  Row: {
+                    "active_users": number,"app": string,"churned_mrr_cents": number,"computed_at": string,"date": string,"mrr_cents": number,"new_mrr_cents": number,"new_signups": number,"paying_customers": number,"refunds_cents": number,"spend_cents": number,"tickets_open": number,"trials_started": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active_users"?: number,"app"?: string,"churned_mrr_cents"?: number,"computed_at"?: string,"date": string,"mrr_cents"?: number,"new_mrr_cents"?: number,"new_signups"?: number,"paying_customers"?: number,"refunds_cents"?: number,"spend_cents"?: number,"tickets_open"?: number,"trials_started"?: number
+                  }
+                  Update: {
+                    "active_users"?: number,"app"?: string,"churned_mrr_cents"?: number,"computed_at"?: string,"date"?: string,"mrr_cents"?: number,"new_mrr_cents"?: number,"new_signups"?: number,"paying_customers"?: number,"refunds_cents"?: number,"spend_cents"?: number,"tickets_open"?: number,"trials_started"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"app_versions": {
                   Row: {
                     "min_version": string,"note": string | null,"platform": string,"updated_at": string
@@ -86,6 +114,20 @@ isOneToOne: true
       referencedRelation: "tribes"
       referencedColumns: ["code"]
     }
+                  ]
+                },"campaigns": {
+                  Row: {
+                    "budget_cents": number | null,"channel": string,"created_at": string,"creative_url": string | null,"daily_budget_cents": number | null,"end_date": string | null,"id": string,"name": string,"objective": string | null,"owner": string | null,"platform": string | null,"start_date": string | null,"status": string,"target_cac_cents": number | null,"utm_campaign": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "budget_cents"?: number | null,"channel"?: string,"created_at"?: string,"creative_url"?: string | null,"daily_budget_cents"?: number | null,"end_date"?: string | null,"id"?: string,"name": string,"objective"?: string | null,"owner"?: string | null,"platform"?: string | null,"start_date"?: string | null,"status"?: string,"target_cac_cents"?: number | null,"utm_campaign"?: string | null
+                  }
+                  Update: {
+                    "budget_cents"?: number | null,"channel"?: string,"created_at"?: string,"creative_url"?: string | null,"daily_budget_cents"?: number | null,"end_date"?: string | null,"id"?: string,"name"?: string,"objective"?: string | null,"owner"?: string | null,"platform"?: string | null,"start_date"?: string | null,"status"?: string,"target_cac_cents"?: number | null,"utm_campaign"?: string | null
+                  }
+                  Relationships: [
+                    
                   ]
                 },"client_errors": {
                   Row: {
@@ -149,6 +191,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"marketing_spend_daily": {
+                  Row: {
+                    "campaign_id": string | null,"campaign_key": string,"clicks": number,"conversions": number,"currency": string,"date": string,"imported_at": string,"impressions": number,"platform": string,"source": string,"spend_cents": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campaign_id"?: string | null,"campaign_key"?: string,"clicks"?: number,"conversions"?: number,"currency"?: string,"date": string,"imported_at"?: string,"impressions"?: number,"platform": string,"source"?: string,"spend_cents"?: number
+                  }
+                  Update: {
+                    "campaign_id"?: string | null,"campaign_key"?: string,"clicks"?: number,"conversions"?: number,"currency"?: string,"date"?: string,"imported_at"?: string,"impressions"?: number,"platform"?: string,"source"?: string,"spend_cents"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "marketing_spend_daily_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"memberships": {
                   Row: {
                     "joined_at": string,"member_id": string | null,"removed_at": string | null,"role": string,"status": string,"tribe_code": string,"user_id": string
@@ -193,6 +255,20 @@ isOneToOne: false
                   }
                   Update: {
                     "metric"?: string,"target"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"product_events": {
+                  Row: {
+                    "created_at": string,"id": number,"name": string,"properties": NonNullable<Json>,"tribe_code": string | null,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: never,"name": string,"properties"?: NonNullable<Json>,"tribe_code"?: string | null,"user_id"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: never,"name"?: string,"properties"?: NonNullable<Json>,"tribe_code"?: string | null,"user_id"?: string | null
                   }
                   Relationships: [
                     
@@ -390,6 +466,12 @@ isOneToOne: false
             "admin_activation":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"admin_audit_recent":
+{ Args: { "p_limit"?: number }; Returns: Json
+                           },
+"admin_campaign_save":
+{ Args: { "p": Json }; Returns: string
+                           },
 "admin_daily":
 { Args: { "p_days"?: number }; Returns: {
               "day": string,"signups": number,"tribes": number
@@ -403,11 +485,29 @@ isOneToOne: false
               "area": string,"last_at": string,"line": number,"message": string,"n": number,"path": string,"source": string,"ua": string,"visitors": number
             }[]
                            },
+"admin_import_spend":
+{ Args: { "p_rows": Json }; Returns: number
+                           },
+"admin_log":
+{ Args: { "p_action": string,"p_after"?: Json,"p_before"?: Json,"p_ip"?: string,"p_reason"?: string,"p_target_id"?: string,"p_target_type"?: string }; Returns: undefined
+                           },
+"admin_marketing":
+{ Args: { "p_days"?: number }; Returns: Json
+                           },
 "admin_set_subscription":
 { Args: { "p_code": string,"p_note"?: string,"p_status": string,"p_trial_days"?: number }; Returns: undefined
                            },
 "admin_stats":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"admin_team":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"admin_team_remove":
+{ Args: { "p_email": string }; Returns: undefined
+                           },
+"admin_team_set":
+{ Args: { "p_email": string,"p_role": string }; Returns: undefined
                            },
 "admin_ticket_new":
 { Args: { "p_body": string,"p_category": string,"p_email": string,"p_subject": string }; Returns: Json

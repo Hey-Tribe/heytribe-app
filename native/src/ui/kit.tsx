@@ -131,7 +131,7 @@ export function Avatar({ name, color, size = 30 }: { name?: string; color?: stri
 }
 
 /* ---------- buttons ---------- */
-type BtnProps = { label: string; onPress: () => void; kind?: "primary" | "secondary" | "danger" | "quiet"; busy?: boolean; disabled?: boolean; icon?: string; style?: StyleProp<ViewStyle> } & Pick<PressableProps, "accessibilityHint">;
+type BtnProps = { label: string; onPress: () => void; kind?: "primary" | "secondary" | "danger" | "quiet"; busy?: boolean; disabled?: boolean; icon?: React.ReactNode; style?: StyleProp<ViewStyle> } & Pick<PressableProps, "accessibilityHint">;
 export function Button({ label, onPress, kind = "primary", busy, disabled, icon, style, accessibilityHint }: BtnProps) {
   const c = useColors();
   const bg = kind === "primary" ? c.sageBtn : kind === "danger" ? c.danger : kind === "secondary" ? c.pill : "transparent";
@@ -139,7 +139,7 @@ export function Button({ label, onPress, kind = "primary", busy, disabled, icon,
   return (
     <Pressable onPress={onPress} disabled={disabled || busy} accessibilityRole="button" accessibilityHint={accessibilityHint} accessibilityState={{ disabled: disabled || busy, busy }}
       style={({ pressed }) => [s.btn, { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 }, style]}>
-      {busy ? <ActivityIndicator color={fg} /> : <T weight={kind === "primary" || kind === "danger" ? "semibold" : "medium"} color={fg}>{icon ? `${icon}  ` : ""}{label}</T>}
+      {busy ? <ActivityIndicator color={fg} /> : <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>{icon}<T weight={kind === "primary" || kind === "danger" ? "semibold" : "medium"} color={fg}>{label}</T></View>}
     </Pressable>
   );
 }

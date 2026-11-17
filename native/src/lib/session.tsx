@@ -62,8 +62,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const checkTerms = useCallback(async () => {
     if (!session) return;
     const now = await supabase.from("terms_acceptances").select("terms_version").eq("terms_version", TERMS_VERSION).eq("privacy_version", PRIVACY_VERSION).limit(1);
-    if (now.error) return;
-    setNeedsTerms(!(now.data || []).length);
+    if (now.error || (now.data || []).length) { setNeedsTerms(false); return; }
+    const ever = await supabase.from("terms_acceptances").select("terms_version").limit(1);
+    const fresh = Date.now() - new Date(session.user.created_at).getTime() < 864e5;
+    if (!ever.error && !(ever.data || []).length && fresh) {
+      await supabase.from("terms_acceptances").insert({ terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION, source: "sign_up" });
+      setNeedsTerms(false); return;
+    }
+    setNeedsTerms(true);
   }, [session]);
 
   // Both functions only set state after a server reply, never during the effect itself.

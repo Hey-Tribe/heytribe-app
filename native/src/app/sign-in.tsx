@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Linking, Platform, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { googleSignIn } from "@/lib/oauth";
 import * as Crypto from "expo-crypto";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
@@ -77,6 +79,11 @@ export default function SignIn() {
     }
   }
 
+  async function google() {
+    setMsg(null);
+    try { await googleSignIn(); } catch (err: any) { setMsg(friendly(err?.message || "Google sign-in didn't work.")); }
+  }
+
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + 48, paddingBottom: insets.bottom + 32, paddingHorizontal: space.gutter, gap: 22 }} keyboardShouldPersistTaps="handled">
       <View style={{ gap: 6 }}>
@@ -112,6 +119,9 @@ export default function SignIn() {
           buttonType={mode === "in" ? AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN : AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK} cornerRadius={25} style={{ height: 50 }} onPress={apple} />
       ) : null}
+
+      <Button label={mode === "in" ? "Sign in with Google" : "Sign up with Google"} kind="secondary" onPress={google}
+        icon={<Ionicons name="logo-google" size={18} color={c.ink} />} />
 
       <Button label="Look around with a sample family" kind="secondary" onPress={() => open(SAMPLE)} />
     </ScrollView>

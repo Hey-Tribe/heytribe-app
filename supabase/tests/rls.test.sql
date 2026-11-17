@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(67);
+select plan(68);
 
 -- Two people, each with their own family; plus a third who asked to join family A and is still pending.
 insert into auth.users (id, aud, role, email, email_confirmed_at) values
@@ -112,10 +112,13 @@ select is((select coalesce(array_agg(p.proname::text order by p.proname), '{}') 
                           'calendar_feed', 'can_read', 'email_done', 'email_feed', 'email_stops_list',
                           'is_admin', 'is_member', 'reminder_done', 'reminder_feed', 'sitter_sheet')),
   '{}'::text[], 'no unreviewed full-rights function is open to signed-out visitors');
--- Every admin function a signed-in user can call must check is_admin() itself.
+-- Every admin function a signed-in user can call must check the caller itself: is_admin(), or a role check through
+-- private.admin_require_role(). admin_whoami is open on purpose: it only answers whether the caller is an admin.
 select is((select coalesce(array_agg(p.proname::text order by p.proname), '{}') from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.proname like 'admin\_%' and has_function_privilege('authenticated', p.oid, 'execute')
-    and pg_get_functiondef(p.oid) !~ 'if not public\.is_admin\(\) then'),
+    and p.proname <> 'admin_whoami'
+    and pg_get_functiondef(p.oid) !~ 'if not public\.is_admin\(\) then'
+    and pg_get_functiondef(p.oid) !~ 'perform private\.admin_require_role\('),
   '{}'::text[], 'every callable admin function checks the caller is an admin');
 -- Two permissive SELECT policies on one table widen each other. These tables were reviewed; a new one fails here.
 select is((select coalesce(array_agg(tablename::text order by tablename), '{}') from (
@@ -160,6 +163,10 @@ select lives_ok($$ select apple_revoke_done('test-cron-secret', '22222222-2222-2
 select is((select count(*)::int from apple_revoke_pending('test-cron-secret')), 0, 'nothing left to revoke');
 select is(apple_event('test-cron-secret', 'nobody', 'email-disabled', 'X@privaterelay.appleid.com'), 'ok', 'Apple email-disabled event is stored');
 select ok('x@privaterelay.appleid.com' = any(email_stops_list('test-cron-secret')), 'that address is now on the no-email list');
+reset role;
+-- A signed-in family member who isn't on the admin list is refused by the role-checked admin functions.
+select pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+select throws_ok($$ select admin_team() $$, '42501', null, 'a normal user cannot list the admin team');
 reset role;
 select ok((select apple_revoked_at is not null from deletion_requests where user_id = '22222222-2222-2222-2222-222222222222'), 'the deletion request shows the Apple revoke time');
 

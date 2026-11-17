@@ -33,7 +33,7 @@ export type Pill<K extends string = string> = { key: K; label: string };
 export function Pills<K extends string>({ items, value, onChange }: { items: Pill<K>[]; value: K; onChange: (k: K) => void }) {
   const c = useColors();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pills} accessibilityRole="tablist">
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }} contentContainerStyle={s.pills} accessibilityRole="tablist">
       {items.map(p => {
         const on = p.key === value;
         return (

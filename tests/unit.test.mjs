@@ -295,3 +295,22 @@ test("page titles reach React as plain text, so & and ' are not escaped twice", 
     assert.doesNotMatch(title.text, /&(amp|#x?[0-9a-f]+|quot|apos|lt|gt);/i, lang + "/" + f);
   }
 });
+
+test("inbound email: Resend webhook signatures are checked, and only heytribe.app mail is forwarded", async () => {
+  const { verify, forUs, buildForward } = await import("../src/pages/api/inbound-email.js");
+  const secret = "whsec_" + Buffer.from("test-secret-key").toString("base64");
+  const body = '{"type":"email.received"}', id = "msg_1", ts = String(Math.floor(Date.now() / 1000));
+  const sig = crypto.createHmac("sha256", Buffer.from("test-secret-key")).update(`${id}.${ts}.${body}`).digest("base64");
+  const h = { "svix-id": id, "svix-timestamp": ts, "svix-signature": "v1," + sig };
+  assert.equal(verify(secret, h, body), true);
+  assert.equal(verify(secret, h, body + " "), false, "a changed body fails");
+  assert.equal(verify(secret, { ...h, "svix-timestamp": String(Number(ts) - 3600) }, body), false, "an old timestamp fails");
+  assert.equal(verify("", h, body), false, "no secret, no entry");
+  assert.equal(forUs(["Hello <hello@heytribe.app>"]), true);
+  assert.equal(forUs(["hello@andamos.app"]), false);
+  const f = buildForward({ from: "Pat <pat@example.com>", to: ["hello@heytribe.app"], subject: "Help <b>" }, { text: "hi", html: "<p>hi</p>", attachments: [] });
+  assert.equal(f.subject, "Fwd: Help <b>");
+  assert.equal(f.replyTo, "pat@example.com");
+  assert.match(f.html, /Pat &lt;pat@example.com&gt;/);
+  assert.equal(buildForward({ subject: "Fwd: x" }, { text: "" }).subject, "Fwd: x");
+});

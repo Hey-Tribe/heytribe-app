@@ -66,7 +66,8 @@ GitHub repository secrets for the TestFlight build: APPLE_TEAM_ID, ASC_KEY_ID, A
 - Resend domain heytribe.app: DKIM and the `send` SPF and bounce records are in Vercel DNS. Resend also asks for a CNAME `rsend` → `send.forge.rmta.net`; until it's added the domain shows "Partially Failed".
 - Supabase sign-up, password reset and login-link emails: Supabase › Authentication › Emails › SMTP Settings › Enable custom SMTP. Host `smtp.resend.com`, port `465`, username `resend`, password a Resend API key with sending access to heytribe.app, sender `hello@heytribe.app`, name `HeyTribe`. Then raise Rate Limits › emails per hour to 100. Without this, Supabase's built-in sender only reaches the team's own addresses, about 2 an hour, so new families can't confirm their email or reset passwords.
 - Branded templates for those emails are in `supabase/templates/`. Paste them in Supabase › Authentication › Emails › Templates once custom SMTP is on.
-- Admin addresses for support alerts: table `admin_emails`. Replies from customers go to the first one (hello@heytribe.app has no inbox).
+- Admin addresses for support alerts: table `admin_emails`.
+- **hello@heytribe.app inbox:** the root MX record sends heytribe.app mail to Resend (Inboxes › hello@heytribe.app). Resend's `email.received` webhook calls `/api/inbound-email`, which forwards each message to support@squaredawaylabs.com (Vercel `FORWARD_TO` overrides) with the sender as the reply address. Needs `RESEND_WEBHOOK_SECRET` in the heytribe project.
 
 ## 4. Deploying
 

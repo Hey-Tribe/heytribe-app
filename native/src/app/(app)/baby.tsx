@@ -10,6 +10,7 @@ import { useSave } from "@/ui/useSave";
 import { useColors } from "@/ui/theme";
 
 const KIND: Record<string, string> = { feed: "Feed", diaper: "Diaper", sleep: "Sleep" };
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const dur = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
 
 // Quick taps to log feeds, diapers and sleep. One log per day, shared with everyone (same as the web app).
@@ -54,7 +55,7 @@ export default function Baby() {
         {sleeping ? <T weight="semibold" color={c.sageInk}>Sleeping since {timeLabel(sleeping.at)}</T> : null}
         <T>Last feed: <T muted>{ago(last("feed"))}</T></T>
         <T>Last diaper: <T muted>{ago(last("diaper"))}</T></T>
-        <T>Today: <T muted>{today.filter(e => e.kind === "feed").length} feeds · {today.filter(e => e.kind === "diaper").length} diapers · {dur(today.filter(e => e.kind === "sleep").reduce((n, e) => n + ((e.end ?? nowMin()) - e.at), 0))} sleep</T></T>
+        <T>Today: <T muted>{plural(today.filter(e => e.kind === "feed").length, "feed")} · {plural(today.filter(e => e.kind === "diaper").length, "diaper")} · {dur(today.filter(e => e.kind === "sleep").reduce((n, e) => n + ((e.end ?? nowMin()) - e.at), 0))} sleep</T></T>
       </Card>
       {today.length === 0 && entries(yest).length === 0 ? <Empty title="Nothing logged yet" body="Tap Feed, Diaper or Sleep as it happens. Everyone sees the log, so whoever's on duty knows what's next." /> : null}
       {today.length ? <View><H2>Today</H2><Rows>{today.map(row(k))}</Rows></View> : null}

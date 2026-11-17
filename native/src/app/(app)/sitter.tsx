@@ -9,12 +9,13 @@ import type { Sitter as SitterInfo } from "@/lib/types";
 import { Button, Card, Field, H2, Pills, Sheet, T, useToast } from "@/ui/kit";
 import { Screen } from "@/ui/Screen";
 import { useSave } from "@/ui/useSave";
+import { useColors } from "@/ui/theme";
 
 const LENGTHS: [string, string][] = [["1", "Tonight"], ["2", "2 days"], ["7", "A week"], ["30", "A month"]];
 
 // House notes for the sitter, and a private link that shows them the care sheet without an account.
 export default function Sitter() {
-  const fam = useFamily(), save = useSave(), toast = useToast();
+  const fam = useFamily(), save = useSave(), toast = useToast(), c = useColors();
   const { code } = useSession();
   const info = (fam.get<SitterInfo & { id: string }>("info", "sitter") || {}) as SitterInfo;
   const [link, setLink] = useState<{ token: string; expires_at: string } | null>(null);
@@ -49,7 +50,7 @@ export default function Sitter() {
 
   return (
     <Screen title="Sitter">
-      <View><H2 right={<T size={13} weight="medium" onPress={() => setEdit({ ...info })}>Edit</T>}>House notes</H2>
+      <View><H2 right={<T size={13} weight="medium" color={c.sageInk} onPress={() => setEdit({ ...info })}>Edit</T>}>House notes</H2>
         <Card style={{ gap: 12 }}>{notes.map(([key, l]) => (
           <View key={key} style={{ gap: 2 }}><T size={13} muted>{l}</T><T muted={!info[key]}>{info[key] || "Not added"}</T></View>
         ))}</Card>

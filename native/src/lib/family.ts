@@ -1,6 +1,6 @@
 // Small shared rules about family members and weeks, matching the web app.
 import { addDays, dowIdx, fromYmd, todayKey, ymd } from "./dates";
-import type { Chore, Member } from "./types";
+import type { Chore, Member, Countdown } from "./types";
 
 export const sortMembers = (ms: Member[]) => [...ms].filter(m => m.name).sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || a.name.localeCompare(b.name));
 export const memberName = (ms: Member[], id?: string | null) => !id || id === "all" ? "Everyone" : ms.find(m => m.id === id)?.name || "Someone";
@@ -21,3 +21,11 @@ export function weekStars(chores: Chore[], memberId: string, start = monday()) {
 }
 export const DEFAULT_GOAL = 20;
 export const today = todayKey;
+
+// The next date a countdown lands on: yearly ones roll forward to this year or next.
+export function nextCountdown(x: Countdown, k = todayKey()) {
+  if (!x.yearly || x.date >= k) return x.date;
+  const d = fromYmd(x.date), y = fromYmd(k).getFullYear();
+  const on = (yy: number) => ymd(new Date(yy, d.getMonth(), d.getDate()));
+  return on(y) >= k ? on(y) : on(y + 1);
+}

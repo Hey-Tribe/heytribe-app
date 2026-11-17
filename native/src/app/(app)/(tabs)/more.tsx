@@ -17,13 +17,30 @@ export default function More() {
   const { code } = useSession();
   const members = useCol<Member>("members").filter(m => m.name);
   const notes = useCol<Note>("notes").filter(n => n.text);
+  const hasBaby = members.some(m => m.style === "baby");
 
   const groups: { title: string; links: Link[] }[] = [
+    { title: "Everyday", links: [
+      { title: "Meals", sub: "Dinner for the week", icon: "restaurant-outline", href: "/meals" },
+      { title: "Fridge notes", sub: notes.length ? `${notes.length} ${notes.length === 1 ? "note" : "notes"}` : "Quick messages", icon: "chatbox-ellipses-outline", href: "/notes" },
+      { title: "Routines", sub: "Bedtime and mornings", icon: "repeat-outline", href: "/routines" },
+      { title: "Countdowns", sub: "Birthdays and big days", icon: "hourglass-outline", href: "/countdowns" },
+      { title: "Family poll", sub: "Ask everyone", icon: "stats-chart-outline", href: "/poll" },
+    ] },
+    { title: "Care", links: [
+      { title: "Health", sub: "Medicine and records", icon: "medkit-outline", href: "/health" },
+      ...(hasBaby ? [{ title: "Baby log", sub: "Feeds, diapers, sleep", icon: "happy-outline" as Icon, href: "/baby" as Href }] : []),
+      { title: "School", sub: "Forms and lunch", icon: "school-outline", href: "/school" },
+      { title: "Sitter", sub: "Care sheet and link", icon: "key-outline", href: "/sitter" },
+    ] },
+    { title: "Household", links: [
+      { title: "Bills & home", sub: "Bills, subscriptions, upkeep", icon: "home-outline", href: "/home" },
+      { title: "Documents", sub: "Where things are kept", icon: "document-text-outline", href: "/docs" },
+      { title: "Contacts", sub: "Doctors, school, emergency", icon: "call-outline", href: "/contacts" },
+      { title: "Trips", sub: "Plans and packing", icon: "airplane-outline", href: "/trips" },
+    ] },
     { title: "Family", links: [
       { title: "Family", sub: `${members.length} ${members.length === 1 ? "person" : "people"}`, icon: "people-outline", href: "/family" },
-      { title: "Fridge notes", sub: notes.length ? `${notes.length} ${notes.length === 1 ? "note" : "notes"}` : undefined, icon: "chatbox-ellipses-outline", href: "/notes" },
-    ] },
-    { title: "App", links: [
       { title: "Settings", sub: "Account, families, help", icon: "settings-outline", href: "/settings" },
     ] },
   ];

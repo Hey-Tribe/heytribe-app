@@ -36,10 +36,10 @@ export type Meal = { id: string; dish?: string; ingredients?: string }; // id is
 export type Note = { id: string; text: string; tone?: string; at?: number; by?: MemberId };
 export type Poll = { question: string; options: { label: string; votes: MemberId[] }[] };
 
-export type BabyEntry = { id: string; kind: "sleep" | "feed" | "diaper" | string; at: number; end?: number; by?: MemberId; note?: string };
+export type BabyEntry = { id: string; kind: "sleep" | "feed" | "diaper" | string; at: number; end?: number | null; by?: MemberId; note?: string }; // at/end: minutes after midnight
 export type BabyDay = { id: string; entries: BabyEntry[] }; // id is the date
 
-export type Routine = { id: string; name: string; member?: MemberId; time?: string; steps: { id: string; text: string }[]; done?: Record<string, Record<string, boolean>> };
+export type Routine = { id: string; name: string; member?: MemberId; time?: string; steps: { id: string; text: string }[]; done?: Record<string, Record<string, boolean>> }; // done: date -> step id -> done
 export type Med = {
   id: string; name: string; member?: MemberId; dose?: string; note?: string; start?: string; until?: string;
   times: string[]; // "08:00"
@@ -48,11 +48,11 @@ export type Med = {
 export type Health = { id: string; title: string; kind?: string; member?: MemberId; date?: string; next?: string; note?: string };
 export type Contact = { id: string; name: string; role?: string; phone?: string; email?: string; note?: string; member?: MemberId };
 export type School = {
-  id: string; kind: "lunch" | "form" | string; member?: MemberId; title?: string;
+  id: string; kind: "lunch" | "slip" | string; member?: MemberId; title?: string;
   week?: string; days?: Record<string, string>; due?: string; done?: boolean;
 };
 export type Home = {
-  id: string; kind: "bill" | "sub" | "task" | string; name: string;
+  id: string; kind: "bill" | "sub" | "upkeep" | string; name: string;
   amount?: number; dueDay?: number; autopay?: boolean; paid?: Record<string, boolean>; // month "YYYY-MM" -> paid
   cycle?: string; renews?: string; every?: number; last?: string;
 };
@@ -60,7 +60,7 @@ export type Doc = { id: string; title: string; kind?: string; member?: MemberId;
 export type Trip = {
   id: string; name: string; where?: string; start?: string; end?: string;
   plan?: { id: string; day: string; text: string }[];
-  packing?: { id: string; text: string; member?: MemberId; checked?: boolean }[];
+  packing?: { id: string; text: string; member?: MemberId; packed?: boolean }[];
   petcare?: string;
 };
 export type Countdown = { id: string; title: string; date: string; member?: MemberId; tone?: string; yearly?: boolean };

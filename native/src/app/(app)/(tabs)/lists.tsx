@@ -6,21 +6,9 @@ import { useSession } from "@/lib/session";
 import type { Item } from "@/lib/types";
 import { Button, Check, Empty, Fade, Field, H2, Page, Pills, Row, Rows, Sheet, T, useToast } from "@/ui/kit";
 import { useSave } from "@/ui/useSave";
+import { ORDER, sectionFor } from "@/lib/grocery";
 import { font, radius, useColors } from "@/ui/theme";
 
-// Same sections and word rules as the web app (SECTIONS in spa/app.js), so both sort items the same way.
-const SECTIONS: [string, RegExp][] = [
-  ["produce", /avocado|banana|apple|cilantro|lettuce|tomato|onion|lime|lemon|berr|potato|carrot|pepper|spinach|fruit|veg|garlic|cucumber|grape|orange|mango|plantain|corn\b/i],
-  ["dairy", /milk|egg|cheese|yogurt|yoghurt|butter|cream/i],
-  ["bakery", /bread|tortilla|bagel|bun\b|buns|roll|pita|muffin/i],
-  ["meat & fish", /chicken|beef|pork|fish|turkey|salmon|bacon|sausage|shrimp|steak|ham\b/i],
-  ["pantry", /rice|bean|pasta|flour|sugar|oil|cereal|coffee|salt|sauce|can\b|cans|oat|honey|spice|salsa|chips|snack|cracker|tea\b/i],
-  ["baby", /diaper|wipe|formula|puffs|baby|pacifier/i],
-  ["household", /paper|soap|detergent|towel|trash|foil|sponge|bleach|batter|bulb|toilet/i],
-  ["pharmacy", /vitamin|tylenol|ibuprofen|bandage|medicine|prescription|toothpaste|shampoo/i],
-];
-export const sectionFor = (t: string) => (SECTIONS.find(([, r]) => r.test(t)) || ["other"])[0];
-const ORDER = [...SECTIONS.map(s => s[0]), "other"];
 const DEFAULT = "Groceries";
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 

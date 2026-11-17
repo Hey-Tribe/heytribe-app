@@ -3,8 +3,8 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import { useCol, useFamily } from "@/lib/store";
 import { useSession } from "@/lib/session";
-import { addDays, dayDiff, dayLabel, eventsOn, fromYmd, monthKey, nowMin, relDay, timeLabel, todayKey, ymd } from "@/lib/dates";
-import { choreDone, choreOn, memberName, sortMembers, weekDays } from "@/lib/family";
+import { addDays, dayDiff, dayLabel, eventsOn, monthKey, nowMin, relDay, timeLabel, todayKey, ymd } from "@/lib/dates";
+import { choreDone, choreOn, memberName, nextCountdown, sortMembers, weekDays } from "@/lib/family";
 import type { Chore, Countdown, Event, Home, Med, Member, Note } from "@/lib/types";
 import { Avatar, Card, Check, Empty, Fab, Fade, H2, Page, Pills, Row, Rows, T } from "@/ui/kit";
 import { EventSheet } from "@/ui/EventSheet";
@@ -74,7 +74,7 @@ export default function Today() {
         left={<Check on={false} label={"Mark paid: " + b.name} onPress={() => save(fam.merge("home", b.id, { paid: { [mk]: true } }))} />} />
     ))}</Rows></View>;
   };
-  const nextCountdowns = countdowns.map(x => ({ x, day: nextDate(x, k) })).filter(o => o.day >= k).sort((a, b) => a.day.localeCompare(b.day)).slice(0, 3);
+  const nextCountdowns = countdowns.map(x => ({ x, day: nextCountdown(x, k) })).filter(o => o.day >= k).sort((a, b) => a.day.localeCompare(b.day)).slice(0, 3);
 
   const day = tab === "tomorrow" ? tomorrow : k;
   const empty = members.length === 0 && events.length === 0 && chores.length === 0;
@@ -109,10 +109,3 @@ export default function Today() {
 }
 
 const ordinal = (n: number) => n + (n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th");
-function nextDate(x: Countdown, k: string) {
-  if (!x.yearly || x.date >= k) return x.date;
-  const d = fromYmd(x.date), now = fromYmd(k);
-  let y = now.getFullYear(); const cand = (yy: number) => ymd(new Date(yy, d.getMonth(), d.getDate()));
-  if (cand(y) < k) y++;
-  return cand(y);
-}

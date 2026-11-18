@@ -5,7 +5,8 @@ import { useSession } from "@/lib/session";
 import { SAMPLE, SITE } from "@/lib/config";
 import { sortMembers } from "@/lib/family";
 import type { Member } from "@/lib/types";
-import { Avatar, Button, Card, Confirm, Empty, Fab, Field, H2, Row, Rows, Sheet, T, useToast } from "@/ui/kit";
+import { Avatar, Button, Card, Choice, Confirm, Empty, Fab, Field, H2, Row, Rows, Sheet, T, useToast } from "@/ui/kit";
+import { router } from "expo-router";
 import { Screen } from "@/ui/Screen";
 import { useSave } from "@/ui/useSave";
 import { MEMBER, MEMBER_COLORS, useColors } from "@/ui/theme";
@@ -31,8 +32,11 @@ export default function Family() {
       </Card>
       {members.length === 0 ? <Empty title="No one here yet" body="Add each person in your family, kids and babies too. Then you can give them plans, chores and rewards." />
         : <View><H2 right={`${members.length} people`}>People</H2>
-          <Rows>{members.map(m => <Row key={m.id} title={m.id === me ? `${m.name} (you)` : m.name} sub={m.style === "baby" ? "Baby" : undefined}
+          <Rows>{members.map(m => <Row key={m.id} title={m.id === me ? `${m.name} (you)` : m.name} sub={m.style === "baby" ? "Baby" : m.style === "kid" ? "Kid" : undefined}
             left={<Avatar name={m.name} color={m.color} />} onPress={() => setEdit(m)} />)}</Rows></View>}
+      {members.some(m => m.style === "kid") ? <View><H2>Kid view</H2>
+        <Rows>{members.filter(m => m.style === "kid").map(m => <Row key={m.id} title={`Open ${m.name}'s view`} sub="Big, simple screen with their routines and chores"
+          left={<Avatar name={m.name} color={m.color} />} onPress={() => router.push({ pathname: "/kid/[id]", params: { id: m.id } })} />)}</Rows></View> : null}
       {members.length && !me ? <Card style={{ gap: 8 }}><T weight="semibold">Which one is you?</T><T size={14} muted>Tap a person, then “This is me”, so chores and reminders know who you are.</T></Card> : null}
 
       <MemberSheet value={edit} isMe={!!edit?.id && edit.id === me} onClose={() => setEdit(null)} c={c}
@@ -67,13 +71,11 @@ function MemberSheet({ value, isMe, onClose, onSave, onDelete, onMe, c }: {
           ))}
         </View>
       </View>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <Button label="Baby" kind={v.style === "baby" ? "primary" : "secondary"} onPress={() => setV(o => ({ ...o, style: o.style === "baby" ? undefined : "baby" }))}
-          accessibilityHint="Babies get a baby log instead of chores" style={{ flex: 1 }} />
-      </View>
+      <Choice label="Look" items={[{ key: "short", label: "Short hair" }, { key: "long", label: "Long hair" }, { key: "kid", label: "Kid" }, { key: "baby", label: "Baby" }]}
+        value={(v.style || "short") as string} onChange={st => setV(o => ({ ...o, style: st }))} />
       {err ? <T size={14} color={c.danger}>{err}</T> : null}
       <Button label={value?.id ? "Save" : "Add person"} onPress={() => { if (!v.name?.trim()) return setErr("Add a name."); onSave({ ...v, name: v.name.trim() }); }} />
-      {value?.id && !isMe && v.style !== "baby" ? <Button label="This is me" kind="secondary" onPress={() => onMe(value)} /> : null}
+      {value?.id && !isMe && v.style !== "baby" && v.style !== "kid" ? <Button label="This is me" kind="secondary" onPress={() => onMe(value)} /> : null}
       {value?.id ? <Button label="Remove from family" kind="quiet" onPress={() => setAsk(true)} /> : null}
       <Confirm open={ask} title={`Remove ${v.name}?`} body="Their plans and chores stay, but won't show a name. You can undo right after." yes="Remove"
         onYes={() => onDelete(value!)} onClose={() => setAsk(false)} />

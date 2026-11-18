@@ -19,7 +19,8 @@
     "production": {
       "ios": {
         "appleTeamId": "4395SDMFHT",
-        "bundleIdentifier": "app.heytribe.ios"
+        "bundleIdentifier": "app.heytribe.ios",
+        "ascAppId": "6836027831"
       }
     }
   }

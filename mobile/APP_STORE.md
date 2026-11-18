@@ -85,7 +85,7 @@ Privacy: https://www.heytribe.app/privacy.html
 
 **Support URL:** https://www.heytribe.app/contact.html  **Marketing URL:** https://www.heytribe.app  **Privacy policy URL:** https://www.heytribe.app/privacy.html
 
-**Copyright:** 2026 Kopimore Hospitality Group (adjust to the legal owner)
+**Copyright:** 2026 Squared Away Labs LLC
 
 ## App privacy answers
 
